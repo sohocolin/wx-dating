@@ -11,15 +11,15 @@ let curDay = curDate.getDate()
 let pageData = {
   dateData: {
     date: "",                //当前日期字符串
-
-
-
     arrIsShow: [],           //是否当前月日期
     arrDays: [],             //关于几号的信息
     arrInfoEx: [],           //农历节假日等扩展信息
     arrInfoExShow: [],       //处理后用于显示的扩展信息
-
-
+  },
+  detailData: {
+    curDay: '',
+    curInfo1: '',
+    curInfo2: ''
   }
 }
 //月份天数表
@@ -44,6 +44,19 @@ var getOffset = function(Year, Month) {
   // console.log(offset)
   offset = offset == 0 ? 6 : offset - 1//注意这个转换，Date对象的getDay函数返回返回值是 0（周日） 到 6（周六）
   return offset
+}
+// 刷新详细日数据
+var refreshDetailData = function(index){
+  var curEx = pageData.dateData.arrInfoEx[index];
+  if (!curEx)
+    return;
+  curDay = curEx.sDay;
+  pageData.detailData.curMonth = curEx.sMonth;
+  pageData.detailData.curYear = curEx.sYear;
+  pageData.detailData.curDay = curEx.sDay;
+  pageData.detailData.showDay = curEx.sYear + "年" +  curEx.sMonth + "月" + curEx.sDay;
+  pageData.detailData.curInfo1 = "农历" + curEx.lunarMonth + "月" + curEx.lunarDay + " " + curEx.lunarFestival;
+  pageData.detailData.curInfo2 = curEx.cYear+curEx.lunarYear + "年 " + curEx.cMonth + "月 " + curEx.cDay + "日";
 }
 // 创建页面实例对象
 Page({
@@ -93,21 +106,11 @@ Page({
     pageData.dateData.date = this.topDate(curYear, curMonth + 1, curDay)
     // 获取当月偏移
     var offset = getOffset(curYear, curMonth)
-    console.log('当月偏移'+offset)
+    // console.log('当月偏移'+offset)
 
     var offset2 = getDayCount(curYear, curMonth) + offset
-    console.log('偏移量加天数'+offset2)
+    // console.log('偏移量加天数'+offset2)
 
-    // if ( curMonth === 0) {
-    //   prevMonthDays = getDayCount(curYear - 1, 11)
-    // } else {
-    //   prevMonthDays = getDayCount(curYear, curMonth -1)
-    // }
-    // if (curMonth === 11) {
-    //   nextMonthDays = getDayCount(curYear + 1, 0)
-    // } else {
-    //   nextMonthDays = getDayCount(curYear, curMonth - 1)
-    // }
     if (curMonth === 0) {
       prevMonthDays = getDayCount(curYear - 1, 11)
       nextMonthDays = getDayCount(curYear, curMonth + 1)
@@ -130,6 +133,7 @@ Page({
           pageData.dateData.arrDays[i] = i - offset2 + 1
         }
       }
+
       // 添加阴历相关数据
       var d = new Date(year, month, i - offset + 1)
       var dEx = calendarConverter.solar2lunar(d)
@@ -142,35 +146,10 @@ Page({
         pageData.dateData.arrInfoExShow[i] = dEx.lunarDay
       }
     }
-    // 上个月
-
-    console.log('上个月天数'+prevMonthDays)
-    console.log('本月天数'+curMonthDays)
-    console.log('下个月天数'+nextMonthDays)
-    // for (var i = 0; i < 42; ++i) {
-    //   pageData.dateData.arrIsShow[i] = i < offset || i >= offset2 ? false : true
-    //   if (pageData.dateData.arrIsShow[i])
-    //     continue
-    //   if ( i < curMonthDays) {
-    //     pageData.dateData.arrDays[i] = i - offset + 1 + prevMonthDays
-    //   } else {
-    //     pageData.dateData.arrDays[i] = i - offset + 2 - nextMonthDays
-    //   }
-
-      // var d = new Date(year, month, i - offset + 1)
-      // var dEx = calendarConverter.solar2lunar(d)
-      // pageData.dateData.arrInfoEx[i] = dEx
-      // if ('' != dEx.lunarFestival) {
-      //   pageData.dateData.arrInfoExShow[i] = dEx.lunarFestival
-      // } else if ('初一' === dEx.lunarDay) {
-      //   pageData.dateData.arrInfoExShow[i] = dEx.lunarMonth + '月'
-      // } else {
-      //   pageData.dateData.arrInfoExShow[i] = dEx.lunarDay
-      // }
-    // }
-
+    refreshDetailData(offset + day - 1);
     this.setData({
-      dateData: pageData.dateData
+      dateData: pageData.dateData,
+      detailData: pageData.detailData
     })
   },
   // 上个月
@@ -184,8 +163,8 @@ Page({
     {
       --curMonth;
     }
-    console.log(curYear)
-    console.log(curMonth)
+    // console.log(curYear)
+    // console.log(curMonth)
     this.initCurDate(curYear, curMonth, 1)
     this.setData({
       dateData: pageData.dateData,
@@ -203,8 +182,9 @@ Page({
     {
       ++curMonth;
     }
-    console.log(curYear)
-    console.log(curMonth)
+    // console.log(curYear)
+    // console.log(curMonth)
+    // chooseDay = || 1;
     this.initCurDate(curYear, curMonth, 1);
     this.setData({
       dateData: pageData.dateData,
@@ -221,6 +201,28 @@ Page({
     this.setData({
       dateData: pageData.dateData,
       detailData: pageData.detailData
+    })
+  },
+  // 选择picker日期
+  bindDateChange: function(e){
+    var arr = e.detail.value.split("-");
+    this.initCurDate(+arr[0], arr[1]-1, +arr[2]);
+    this.setData({
+      dateData: pageData.dateData,
+      detailData: pageData.detailData
+    })
+  },
+  // 选择日期
+  selectDay: function(e){
+    refreshDetailData(e.currentTarget.dataset.dayIndex)
+    if (e.currentTarget.dataset.dayIndex < 10 && !e.currentTarget.dataset.dayFalse) {
+      this.goLastMonth()
+    } else if (e.currentTarget.dataset.dayIndex > 11 && !e.currentTarget.dataset.dayFalse) {
+      this.goNextMonth()
+    }
+    // this.initCurDate(curYear, curMonth, 1);
+    this.setData({
+      detailData: pageData.detailData,
     })
   },
   /**

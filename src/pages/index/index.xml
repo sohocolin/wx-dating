@@ -2,7 +2,7 @@
     <view class="calendar-navbar">
         <view class="calendar-navbar-button" bindtap="goToday" hover="true" hover-class="view-hover">今日</view>
         <view class="calendar-navbar-button" bindtap="goLastMonth" hover="true" hover-class="view-hover">{{"<"}}</view>
-        <view class="calendar-navbar-date">{{dateData.date}}</view>
+        <view class="calendar-navbar-date">{{detailData.showDay}}</view>
         <view class="calendar-navbar-button" bindtap="goNextMonth" hover="true" hover-class="view-hover">{{">"}}</view>
         <picker class="calendar-navbar-button" mode="date" start="1900-01-01" end="2100-01-01" bindchange="bindDateChange">
             <view hover="true" hover-class="view-hover">跳转</view>
@@ -12,10 +12,10 @@
         <view wx:for="一二三四五六日" wx:key="*this">{{item}}</view>
     </view>
     <view class="calendar-body">
-        <view class="calendar-body-rows" wx:for="012345" wx:for-index="row" wx:key="*this">
+        <view  wx:if="{{ !(!dateData.arrIsShow[35] && row == 5) }}" class="{{ !dateData.arrIsShow[35] ? 'calendar-body-rows-height' : '' }}  calendar-body-rows" wx:for="012345" wx:for-index="row" wx:key="*this">
             <view class="calendar-body-cols" wx:for="0123456" wx:for-index="col" wx:key="*this">
-                <view class="calendar-body-item" hover="true" hover-class="view-hover" data-day-index="{{row * 7 + col}}" bindtap="selectDay">
-                    <view class="{{ !dateData.arrIsShow[row * 7 + col] ? 'not-cur' : 'cur-month' }}">
+                <view class="calendar-body-item {{  }}" hover="true" hover-class="view-hover"  data-day-false="{{ dateData.arrIsShow[row * 7 + col] }}" data-day-index="{{row * 7 + col}}" bindtap="selectDay">
+                    <view  class="{{ !dateData.arrIsShow[row * 7 + col] ? 'not-cur' : 'cur-month' }}">
                         <!--阳历-->
                         <view class="calendar-body-day">
                             {{dateData.arrDays[row * 7 + col]}}
@@ -25,6 +25,9 @@
                         <view class="calendar-body-dayex">
                             {{dateData.arrInfoEx[row * 7 + col].solarFestival || dateData.arrInfoExShow[row * 7 + col]}}
                             <!--{{}}-->
+                        </view>
+                        <view wx:if="{{ dateData.arrInfoEx[row * 7 + col].workRestDay }}" class="work-rest">
+                            {{ dateData.arrInfoEx[row * 7 + col].workRestDay == 1 ? '休息' : '上班' }}
                         </view>
                         <!--<view class="calendar-body-workturn" style="color:{{workTurnData.arrWorkTurn[row * 7 + col] === '休' ? '#09BB07' : '#e64340'}}" hidden="{{!isWorkTurn}}">
                             {{workTurnData.arrWorkTurn[row * 7 + col]}}
