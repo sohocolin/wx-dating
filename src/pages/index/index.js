@@ -3,6 +3,7 @@
 const app = getApp()
 const plugin = require('../../utils/plugin')
 const ccFile = require('../../utils/calendar-converter')
+const common = require('../../utils/common')
 const curDate = new Date()
 let calendarConverter = new ccFile.CalendarConverter()
 let curYear = curDate.getFullYear()
@@ -55,7 +56,7 @@ var refreshDetailData = function(index){
   pageData.detailData.curMonth = curEx.sMonth;
   pageData.detailData.curYear = curEx.sYear;
   pageData.detailData.curDay = curEx.sDay;
-  pageData.detailData.showDay = curEx.sYear + "年" +  curEx.sMonth + "月" + curEx.sDay;
+  pageData.detailData.showDay = curEx.sYear + "年" +  curEx.sMonth + "月";
   pageData.detailData.curInfo1 = "农历" + curEx.lunarMonth + "月" + curEx.lunarDay + " " + curEx.lunarFestival;
   pageData.detailData.curInfo2 = curEx.cYear+curEx.lunarYear + "年 " + curEx.cMonth + "月 " + curEx.cDay + "日";
 }
@@ -70,7 +71,6 @@ Page({
     // 51日历api
     vacationUrl: 'http://cfg.51wnl.com/api/getconfigbyparajson.aspx?appid=ios-wnl-free&appver=2&configkey=Vocation_ZH_CN&lastupdate=',
     festivalUrl: 'http://cfg.51wnl.com/api/getconfigbyparajson.aspx?appid=ios-wnl-free&appver=2&configkey=Festival_ZH_CN&lastupdate='
-
   },
   // 获取51api数据
   get51Api (URL) {
@@ -215,7 +215,11 @@ Page({
   // 选择picker日期
   bindDateChange: function(e){
     var arr = e.detail.value.split("-");
-    this.initCurDate(+arr[0], arr[1]-1, +arr[2]);
+    curYear = +arr[0];
+    curMonth = arr[1]-1;
+    curDay = +arr[2];
+    // this.initCurDate(+arr[0], arr[1]-1, +arr[2]);
+    this.initCurDate(curYear, curMonth, curDay);
     this.setData({
       dateData: pageData.dateData,
       detailData: pageData.detailData
@@ -223,43 +227,110 @@ Page({
   },
   // 选择日期
   selectDay: function(e){
+    var that = this
     refreshDetailData(e.currentTarget.dataset.dayIndex)
     if (e.currentTarget.dataset.dayIndex < 10 && !e.currentTarget.dataset.dayFalse) {
-      this.goLastMonth()
+      // this.goLastMonth()
+      that.setData({
+        one_one: 'animated fadeOutRight',
+        two_two: 'animated fadeInLeft'
+      })
+      setTimeout(function () {
+        that.goLastMonth()
+      }, 300)
+      setTimeout(function () {
+        that.setData({
+          one_one: '',
+          two_two: ''
+        })
+      }, 1000)
     } else if (e.currentTarget.dataset.dayIndex > 11 && !e.currentTarget.dataset.dayFalse) {
-      this.goNextMonth()
+      // this.goNextMonth()
+      that.setData({
+        one_one: 'animated fadeOutLeft',
+        two_two: 'animated fadeInRight'
+      })
+      setTimeout(function () {
+        that.goNextMonth()
+      }, 300)
+      setTimeout(function () {
+        that.setData({
+          one_one: '',
+          two_two: ''
+        })
+      }, 1000)
     }
     // this.initCurDate(curYear, curMonth, 1);
     this.setData({
       detailData: pageData.detailData,
     })
   },
-  /**
-   * 触摸开始
-   * @param e
-   */
+  // 触摸开始
   touchStart (e) {
     this.setData({
       startX: e.changedTouches[0].clientX
     })
   },
-  /**
-   * 触摸结束
-   * @param e
-   */
+  // 触摸结束
   touchEnd (e) {
+    if (this.data.touchStatus) return
     let that = this
     this.setData({
+      touchStatus: true,
       endX: e.changedTouches[0].clientX
     })
     let distance = e.changedTouches[0].clientX - this.data.startX
     if (distance < -100) {
       // left
-      that.goNextMonth()
+      // that.goNextMonth()
+      that.setData({
+        one_one: 'animated fadeOutLeft',
+        two_two: 'animated fadeInRight'
+      })
+      setTimeout(function () {
+        that.goNextMonth()
+      }, 300)
+      setTimeout(function () {
+        that.setData({
+          touchStatus: false,
+          one_one: '',
+          two_two: ''
+        })
+      }, 1000)
     } else if (distance > 100) {
       // right
-      that.goLastMonth()
+      // that.goLastMonth()
+      that.setData({
+        one_one: 'animated fadeOutRight',
+        two_two: 'animated fadeInLeft'
+      })
+      setTimeout(function () {
+        that.goLastMonth()
+      }, 300)
+      setTimeout(function () {
+        that.setData({
+          touchStatus: false,
+          one_one: '',
+          two_two: ''
+        })
+      }, 1000)
+    } else {
+      this.setData({
+        touchStatus: false
+      })
     }
+  },
+  // 扫描二维码
+  scanCode () {
+    let success = res => {
+      this.setData({
+        code: res.result
+      })
+    }
+    let fail = res => {
+      console.log(res)
+    }
+    common.scanCode(success, fail)
   },
   /**
    * 生命周期函数--监听页面加载

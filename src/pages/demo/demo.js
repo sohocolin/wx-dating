@@ -1,6 +1,6 @@
 // 获取全局应用程序实例对象
 const app = getApp()
-
+const Common = require('../../utils/common')
 // 创建页面实例对象
 Page({
   /**
@@ -15,6 +15,7 @@ Page({
   onLoad () {
     console.log(' ---------- onLoad ----------')
     console.dir(app.data)
+    Common.common()
   },
   /**
    * 生命周期函数--监听页面初次渲染完成
