@@ -12,6 +12,7 @@ let pageData = {
   dateData: {
     date: "",                //当前日期字符串
     arrIsShow: [],           //是否当前月日期
+    // arrIsWeek: [],           //是否是周六日
     arrDays: [],             //关于几号的信息
     arrInfoEx: [],           //农历节假日等扩展信息
     arrInfoExShow: [],       //处理后用于显示的扩展信息
@@ -103,7 +104,13 @@ Page({
     // 当月天数
     curMonthDays = getDayCount(curYear, curMonth)
     // 设置顶部日期
-    pageData.dateData.date = this.topDate(curYear, curMonth + 1, curDay)
+    if (!this.data.curStatus) {
+      pageData.dateData.date = this.topDate(curYear, curMonth + 1, curDay)
+      this.setData({
+        curStatus: true
+      })
+    }
+
     // 获取当月偏移
     var offset = getOffset(curYear, curMonth)
     // console.log('当月偏移'+offset)
@@ -124,6 +131,8 @@ Page({
     // 当前月
     for (var i = 0; i < 42; ++i) {
       pageData.dateData.arrIsShow[i] = i < offset || i >= offset2 ? false : true
+      // pageData.dateData.arrIsWeek[i] = (i + 1) % 7 == 0 || (i + 2) % 7 == 0 ? true : false
+      // pageData.dateData.arrIsWeek[i-1] = (i + 1) % 7 == 0 ? true : false
       pageData.dateData.arrDays[i] = i - offset + 1
       if (!pageData.dateData.arrIsShow[i]) {
         if ( i < curMonthDays) {
@@ -226,6 +235,33 @@ Page({
     })
   },
   /**
+   * 触摸开始
+   * @param e
+   */
+  touchStart (e) {
+    this.setData({
+      startX: e.changedTouches[0].clientX
+    })
+  },
+  /**
+   * 触摸结束
+   * @param e
+   */
+  touchEnd (e) {
+    let that = this
+    this.setData({
+      endX: e.changedTouches[0].clientX
+    })
+    let distance = e.changedTouches[0].clientX - this.data.startX
+    if (distance < -100) {
+      // left
+      that.goNextMonth()
+    } else if (distance > 100) {
+      // right
+      that.goLastMonth()
+    }
+  },
+  /**
    * 生命周期函数--监听页面加载
    */
   onLoad () {
@@ -235,11 +271,11 @@ Page({
       .then(info => this.setData({ userInfo: info }))
       .catch(console.info)
     // this.get51Api(this.data.vacationUrl)
-    // 获取节日信息列表
-    this.setData({
-      festivalObj: app.data.festivalObj,
-      festivalObj2: app.data.festivalObj2
-    })
+    // 获取51节日信息列表
+    // this.setData({
+    //   festivalObj: app.data.festivalObj,
+    //   festivalObj2: app.data.festivalObj2
+    // })
     // 设置顶部时间
     // this.topDate(curYear, curMonth, curDay)
     // 初始化数据
@@ -250,9 +286,6 @@ Page({
    */
   onReady () {
     // console.log(' ---------- onReady ----------')
-    // console.log(curYear)
-    // console.log(curMonth)
-    // console.log(curDay)
   },
   /**
    * 生命周期函数--监听页面显示
